@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Reloj demo - Bella y la Bestia (manecillas rápidas)</title>
+  <style>
+    :root{
+      --size: min(420px, 80vw); /* tamaño del reloj */
+    }
+    body{
+      margin:0;
+      min-height:100vh;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      background: linear-gradient(180deg,#111,#2b2b2b);
+      color:#fff;
+      font-family: Inter, system-ui, Arial, sans-serif;
+    }
+
+    .clock-wrap{
+      width:var(--size);
+      height:var(--size);
+      position:relative;
+      display:grid;
+      place-items:center;
+      /* ligero efecto */
+      box-shadow: 0 10px 30px rgba(0,0,0,.6), inset 0 2px 10px rgba(255,255,255,.03);
+      border-radius:50%;
+      background: radial-gradient(circle at 50% 40%, rgba(255,255,255,.02), transparent 30%);
+      overflow:visible;
+    }
+
+    .clock-face{
+      width:100%;
+      height:100%;
+      border-radius:50%;
+      position:relative;
+      overflow:hidden;
+      display:block;
+    }
+
+    /* Imagen de fondo (reloj decorativo - Bella y la Bestia) */
+    .clock-face img.bg{
+      width:100%;
+      height:100%;
+      object-fit:cover;
+      display:block;
+    }
+
+    /* Contenedor de manecillas */
+    .hands{
+      position:absolute;
+      inset:0;
+      pointer-events:none;
+      display:block;
+    }
+
+    .hand{
+      position:absolute;
+      left:50%;
+      top:50%;
+      transform-origin:50% 88%; /* pivote cerca del extremo inferior de la imagen */
+      transform:translate(-50%,-50%) rotate(0deg);
+      will-change: transform;
+      user-select:none;
+      -webkit-user-drag: none;
+    }
+
+    /* Tamaños por defecto para las imágenes de las manos,
+       se ajustan en JS para mantener proporciones correctas */
+    .hand.hour { width:28%; }
+    .hand.minute { width:36%; }
+    .hand.second { width:42%; }
+
+    /* Opcional: añadir una tapa central decorativa */
+    .hub{
+      position:absolute;
+      width:4%;
+      height:4%;
+      left:50%;
+      top:50%;
+      transform:translate(-50%,-50%);
+      border-radius:50%;
+      background: rgba(0,0,0,.7);
+      box-shadow: 0 2px 6px rgba(0,0,0,.6), 0 0 0 4px rgba(255,255,255,.02) inset;
+      z-index: 30;
+    }
+
+    /* Información y controles (opcional) */
+    .controls{
+      margin-top:16px;
+      text-align:center;
+      font-size:13px;
+      opacity:.9;
+    }
+    .controls code{ background:#111;padding:4px 6px;border-radius:4px;font-family:monospace;font-size:12px;}
+    a { color: #ffd27a; text-decoration:none; }
+    small.note { opacity:.85; display:block; margin-top:6px; font-size:12px; color:#ccc; }
+  </style>
+</head>
+<body>
+
+  <div>
+    <div class="clock-wrap" role="img" aria-label="Reloj demo - fondo Bella y la Bestia">
+      <div class="clock-face" id="clockFace">
+        <!-- Reemplaza `fondo.jpg` por tu imagen del reloj de "La Bella y la Bestia" -->
+        <img class="bg" id="bgImage" src="fondo-bella-bestia.jpg" alt="Reloj Bella y la Bestia (fondo)" />
+
+        <div class="hands" id="hands">
+          <!-- Manecillas: puedes usar imágenes PNG/SVG propias con fondo transparente -->
+          <img id="hourHand" class="hand hour" src="manecilla_hora.png" alt="Manecilla de hora" draggable="false">
+          <img id="minuteHand" class="hand minute" src="manecilla_minuto.png" alt="Manecilla de minuto" draggable="false">
+          <img id="secondHand" class="hand second" src="manecilla_segundo.png" alt="Manecilla de segundo" draggable="false">
+
+          <!-- Si no tienes imágenes, el script las sustituirá por SVG sencillos -->
+        </div>
+
+        <div class="hub" aria-hidden="true"></div>
+      </div>
+    </div>
+
+    <div class="controls">
+      <div>Demostración de 3 manecillas girando más rápido que lo normal.</div>
+      <small class="note">Cambia las rutas de las imágenes arriba o modifica las variables de velocidad en el código.</small>
+    </div>
+  </div>
+
+  <script>
+    /* CONFIGURACIÓN: ajusta estos valores para cambiar la velocidad */
+    const config = {
+      // multiplicador respecto al movimiento real.
+      // 1 = velocidad real; por ejemplo 60x hace que el minuto gire 60 veces más rápido.
+      speedMultiplier: {
+        hour: 120,    // ejemplo: la manecilla de hora gira 120 veces más rápido
+        minute: 60,   // ejemplo: la manecilla de minuto gira 60 veces más rápido
+        second: 12    // ejemplo: la manecilla de segundo gira 12 veces más rápido
+      },
+      // Periodos reales en segundos (no tocar normalmente):
+      periods: {
+        hour: 12 * 3600,   // 12 horas = 43200 s
+        minute: 3600,      // 1 hora = 3600 s (trayecto completo de la manecilla de minutos)
+        second: 60         // 60 s
+      }
+    };
+
+    // Elementos
+    const hourEl = document.getElementById('hourHand');
+    const minuteEl = document.getElementById('minuteHand');
+    const secondEl = document.getElementById('secondHand');
+
+    // Si las imágenes no existen (404), sustituimos por SVG inline simple para que funcione sin assets.
+    function fallbackToSVGIfMissing(imgEl, type){
+      imgEl.addEventListener('error', () => {
+        const svgNS = 'data:image/svg+xml;utf8,';
+        let svg = '';
+        if(type === 'hour'){
+          svg = `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 160'><rect x='4' y='10' width='2' height='130' rx='1' fill='%230a0a0a' stroke='%23fff' stroke-opacity='.12' stroke-width='.6'/></svg>`;
+        } else if(type === 'minute'){
+          svg = `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1
