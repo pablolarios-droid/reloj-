@@ -10,7 +10,7 @@ body{
   display:flex;
   justify-content:center;
   align-items:center;
-  background:url('fondo.jpg') center/cover no-repeat fixed; /* 👈 Fondo general */
+  background:url('fondo.jpg') center/cover no-repeat fixed;
 }
 
 .clock{
@@ -19,14 +19,12 @@ body{
   height:400px;
   background:url('reloj.png') center/contain no-repeat;
   border-radius:50%;
-  /* box-shadow eliminado */
 }
 
-/* manecillas centradas */
 .hand{
   position:absolute;
   left:50%;
-  top:52%; /* 👈 Ajuste del eje más abajo */
+  top:52%;
   transform-origin:center bottom;
   transform:translate(-50%,-100%) rotate(0deg);
   pointer-events:none;
@@ -44,7 +42,7 @@ body{
   border:3px solid gold;
   border-radius:50%;
   left:50%;
-  top:52%; /* 👈 Coincide con el eje de rotación */
+  top:52%;
   transform:translate(-50%,-50%);
   z-index:10;
 }
@@ -53,19 +51,16 @@ body{
 <body>
 
 <div class="clock">
-  <!-- manecilla de la hora -->
   <div class="hand hour" id="hour">
     <svg width="10" height="120">
       <rect x="4" y="10" width="2" height="110" rx="1"/>
     </svg>
   </div>
-  <!-- manecilla del minuto -->
   <div class="hand minute" id="minute">
     <svg width="8" height="150">
       <rect x="3" y="10" width="2" height="140" rx="1"/>
     </svg>
   </div>
-  <!-- manecilla del segundo -->
   <div class="hand second" id="second">
     <svg width="6" height="170">
       <rect x="2" y="5" width="2" height="160" rx="1"/>
@@ -79,7 +74,6 @@ const hourHand = document.getElementById('hour');
 const minuteHand = document.getElementById('minute');
 const secondHand = document.getElementById('second');
 
-// ⚡️ velocidades aumentadas
 const speed = {
   hour: 600,
   minute: 480,
@@ -108,3 +102,5 @@ updateClock();
 </script>
 </body>
 </html>
+
+
